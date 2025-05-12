@@ -1,37 +1,72 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import PageLayout from '../components/PageLayout';
 import { useRouter } from 'next/navigation';
+import { DragDropProvider, DropZone } from './DragDropContext';
 import { storeEncryptedFile } from '@/app/lib/browserStorage';
+import dynamic from 'next/dynamic';
 
-type FileWithPreview = {
-  file: File;
-  preview: string;
-  progress: number;
-  error?: string;
-  id: string;
+// Import OCR module dynamically with no SSR to avoid server-side errors
+const processDocumentOcr = async (fileId, key, iv) => {
+  if (typeof window !== 'undefined') {
+    try {
+      const module = await import('@/app/lib/ocr');
+      console.log("OCR module loaded");
+      const result = await module.processDocumentOcr(fileId, key, iv);
+      console.log("OCR processing completed");
+      return result;
+    } catch (error) {
+      console.error("OCR processing error:", error);
+      return ''; // Return empty string in case of error
+    }
+  }
+  console.log("Not in browser environment, skipping OCR");
+  return '';
 };
 
+// Basic layout component
+const SimpleLayout = ({ children }) => (
+  <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <header className="bg-blue-600 text-white p-4">
+      <div className="container mx-auto">
+        <h1 className="text-xl font-bold">Archive</h1>
+      </div>
+    </header>
+    <main className="container mx-auto p-4 mt-4">
+      {children}
+    </main>
+  </div>
+);
+
 export default function UploadPage() {
-  const [files, setFiles] = useState<FileWithPreview[]>([]);
+  const [files, setFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [tags, setTags] = useState('');
   const [runOcr, setRunOcr] = useState(true);
   const [encryptFile, setEncryptFile] = useState(true);
   const [backupToDrive, setBackupToDrive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef(null);
   const router = useRouter();
   
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+  const handleFileSelect = (e) => {
+    console.log("File selection triggered");
     
-    const newFiles: FileWithPreview[] = Array.from(e.target.files).map(file => ({
+    if (!e.target.files || e.target.files.length === 0) {
+      console.log("No files selected");
+      return;
+    }
+    
+    console.log("Files selected:", e.target.files.length);
+    
+    const newFiles = Array.from(e.target.files).map(file => ({
       file,
-      preview: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
       progress: 0,
-      id: crypto.randomUUID()
+      id: Math.random().toString(36).substring(2, 10)
     }));
+    
+    console.log("Processed files:", newFiles.length);
     
     setFiles(prev => [...prev, ...newFiles]);
     
@@ -39,58 +74,43 @@ export default function UploadPage() {
     if (e.target.value) e.target.value = '';
   };
   
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const newFiles: FileWithPreview[] = Array.from(e.dataTransfer.files)
-        .filter(file => {
-          const type = file.type.toLowerCase();
-          return type.includes('pdf') || type.includes('image/');
-        })
-        .map(file => ({
-          file,
-          preview: URL.createObjectURL(file),
-          progress: 0,
-          id: crypto.randomUUID()
-        }));
-        
-      setFiles(prev => [...prev, ...newFiles]);
+  const openFileDialog = () => {
+    if (fileInputRef.current) {
+      console.log("Clicking file input");
+      fileInputRef.current.click();
     }
   };
   
-  const removeFile = (id: string) => {
-    setFiles(prev => {
-      const updatedFiles = prev.filter(f => f.id !== id);
-      // Revoke object URL for the removed file
-      const removedFile = prev.find(f => f.id === id);
-      if (removedFile) URL.revokeObjectURL(removedFile.preview);
-      return updatedFiles;
-    });
+  const handleFilesDropped = (droppedFiles) => {
+    console.log("Files dropped:", droppedFiles.length);
+    
+    const newFiles = droppedFiles.map(file => ({
+      file,
+      name: file.name,
+      size: file.size,
+      progress: 0,
+      id: Math.random().toString(36).substring(2, 10)
+    }));
+    
+    console.log("Processed dropped files:", newFiles.length);
+    setFiles(prev => [...prev, ...newFiles]);
   };
   
   const uploadFiles = async () => {
     if (files.length === 0) return;
-    
+
     setIsUploading(true);
     let successCount = 0;
-    
-    for (const fileData of files) {
+    const updatedFiles = [...files];
+
+    for (let i = 0; i < files.length; i++) {
+      const fileData = files[i];
+
       try {
-        setFiles(prev => 
-          prev.map(f => 
-            f.id === fileData.id 
-              ? { ...f, progress: 10, error: undefined } 
-              : f
-          )
-        );
-        
+        // Update progress
+        updatedFiles[i] = { ...fileData, progress: 10, error: undefined };
+        setFiles([...updatedFiles]);
+
         // Step 1: Register the file with the server
         const formData = new FormData();
         formData.append('file', fileData.file);
@@ -98,176 +118,272 @@ export default function UploadPage() {
         formData.append('ocr', runOcr.toString());
         formData.append('encrypt', encryptFile.toString());
         formData.append('backup', backupToDrive.toString());
-        
+
         // Call the API to register the file
         const response = await fetch('/api/documents/upload', {
           method: 'POST',
           body: formData,
         });
-        
+
         if (!response.ok) {
           const error = await response.json();
           throw new Error(error.message || 'Upload failed');
         }
-        
+
         // Get the document and encryption details from the response
-        const { document } = await response.json();
-        
-        setFiles(prev => 
-          prev.map(f => 
-            f.id === fileData.id 
-              ? { ...f, progress: 30 } 
-              : f
-          )
-        );
-        
+        const { document, encryptionKey, encryptionIv } = await response.json();
+
+        // Update progress
+        updatedFiles[i] = { ...updatedFiles[i], progress: 30 };
+        setFiles([...updatedFiles]);
+
         // Step 2: Store the encrypted file in IndexedDB
         // Read the file as ArrayBuffer
         const fileBuffer = await fileData.file.arrayBuffer();
-        
-        // Upload progress at 60%
-        setFiles(prev => 
-          prev.map(f => 
-            f.id === fileData.id 
-              ? { ...f, progress: 60 } 
-              : f
-          )
-        );
-        
+
+        // Update progress
+        updatedFiles[i] = { ...updatedFiles[i], progress: 60 };
+        setFiles([...updatedFiles]);
+
         // Encrypt and store the file
-        await storeEncryptedFile(fileBuffer, fileData.file.name);
-        
-        // Set progress to 100% for completed upload
-        setFiles(prev => 
-          prev.map(f => 
-            f.id === fileData.id 
-              ? { ...f, progress: 100 } 
-              : f
-          )
+        await storeEncryptedFile(
+          fileBuffer,
+          document.filePath, // Use the server-generated ID as the storage key
+          encryptionKey,
+          encryptionIv,
+          fileData.file.name
         );
-        
+
+        // If OCR is enabled, process the document
+        if (runOcr) {
+          updatedFiles[i] = { ...updatedFiles[i], progress: 75 };
+          setFiles([...updatedFiles]);
+
+          try {
+            // Process OCR on the document
+            const ocrText = await processDocumentOcr(
+              document.filePath,
+              encryptionKey,
+              encryptionIv
+            );
+
+            // Save OCR data to the server
+            if (ocrText) {
+              await fetch('/api/documents/ocr', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  documentId: document.id,
+                  ocrData: ocrText,
+                }),
+              });
+            }
+          } catch (ocrError) {
+            console.error('OCR processing error:', ocrError);
+            // OCR failed, but we'll consider the upload successful
+          }
+        }
+
+        // If backup to Google Drive is enabled, request backup
+        if (backupToDrive) {
+          updatedFiles[i] = { ...updatedFiles[i], progress: 90 };
+          setFiles([...updatedFiles]);
+
+          try {
+            await fetch('/api/documents/backup', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                documentId: document.id,
+              }),
+            });
+          } catch (backupError) {
+            console.error('Google Drive backup error:', backupError);
+            // Backup failed, but we'll consider the upload successful
+          }
+        }
+
+        // Update progress to 100% for completed upload
+        updatedFiles[i] = { ...updatedFiles[i], progress: 100 };
+        setFiles([...updatedFiles]);
+
         successCount++;
       } catch (error) {
         console.error('Upload error:', error);
-        
-        setFiles(prev => 
-          prev.map(f => 
-            f.id === fileData.id 
-              ? { ...f, error: error instanceof Error ? error.message : 'Upload failed' } 
-              : f
-          )
-        );
+
+        updatedFiles[i] = {
+          ...updatedFiles[i],
+          error: error instanceof Error ? error.message : 'Upload failed',
+          progress: 0
+        };
+        setFiles([...updatedFiles]);
       }
     }
-    
+
     setIsUploading(false);
-    
-    // If all uploads were successful, redirect to home page after a short delay
+
+    // Show completion message
     if (successCount === files.length) {
+      alert(`Successfully uploaded ${successCount} file(s).`);
+
+      // Redirect to home page after a short delay
       setTimeout(() => {
         router.push('/');
         router.refresh();
-      }, 1000);
+      }, 2000);
+    } else if (successCount > 0) {
+      alert(`Uploaded ${successCount} out of ${files.length} files. Some files had errors.`);
+    } else {
+      alert('Upload failed. Please try again.');
     }
   };
   
   return (
-    <PageLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Upload Documents</h1>
-        <p className="text-slate-500 dark:text-slate-400">
-          Upload new documents to your personal archive
-        </p>
-      </div>
-
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-        <div className="mb-8">
-          <h2 className="text-xl font-medium mb-4">Upload Files</h2>
+    <DragDropProvider>
+      <SimpleLayout>
+        <div className="bg-white dark:bg-slate-800 rounded shadow p-6">
+          <h2 className="text-2xl font-bold mb-4">Upload Files</h2>
           
-          <div 
-            className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-8 text-center"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
+          <DropZone
+            onFiles={handleFilesDropped}
+            className={`
+              border-2 border-dashed
+              rounded-lg p-8 text-center cursor-pointer
+              hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors
+            `}
           >
-            <div className="mx-auto w-16 h-16 mb-4 flex items-center justify-center bg-blue-100 dark:bg-blue-900 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
+            {(isOver) => (
+              <>
+                <div className="mb-4" onClick={openFileDialog}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                
+                <p className="mb-2 font-medium text-lg" onClick={openFileDialog}>
+                  {isOver ? 'Drop files here' : 'Click to browse files'}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400" onClick={openFileDialog}>
+                  {isOver ? 'Release to upload' : 'or drag and drop files here'}
+                </p>
+                
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  multiple 
+                  accept=".pdf,.jpg,.jpeg,.png" 
+                  onChange={handleFileSelect}
+                  ref={fileInputRef}
+                />
+              </>
+            )}
+          </DropZone>
+
+          {/* Upload settings */}
+          <div className="mt-8">
+            <h3 className="text-lg font-medium mb-4">Upload Settings</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="tags" className="block text-sm font-medium mb-1">
+                  Tags (comma separated)
+                </label>
+                <input
+                  id="tags"
+                  type="text"
+                  placeholder="e.g. important, tax, 2023"
+                  className="w-full py-2 px-3 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  disabled={isUploading}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <input
+                    id="run-ocr"
+                    type="checkbox"
+                    className="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
+                    checked={runOcr}
+                    onChange={(e) => setRunOcr(e.target.checked)}
+                    disabled={isUploading}
+                  />
+                  <label htmlFor="run-ocr" className="ml-2 text-sm">
+                    Run OCR (extract text from document)
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    id="encrypt-file"
+                    type="checkbox"
+                    className="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
+                    checked={encryptFile}
+                    onChange={(e) => setEncryptFile(e.target.checked)}
+                    disabled={isUploading}
+                  />
+                  <label htmlFor="encrypt-file" className="ml-2 text-sm">
+                    Encrypt file
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    id="backup-drive"
+                    type="checkbox"
+                    className="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
+                    checked={backupToDrive}
+                    onChange={(e) => setBackupToDrive(e.target.checked)}
+                    disabled={isUploading}
+                  />
+                  <label htmlFor="backup-drive" className="ml-2 text-sm">
+                    Backup to Google Drive
+                  </label>
+                </div>
+              </div>
             </div>
-            
-            <h3 className="text-lg font-medium mb-2">
-              Drag and drop your files here
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-4">
-              or click to browse files from your computer
-            </p>
-            
-            <label htmlFor="file-upload" className="inline-block">
-              <span className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors cursor-pointer">
-                Select Files
-              </span>
-              <input 
-                id="file-upload" 
-                type="file" 
-                className="hidden" 
-                multiple 
-                accept=".pdf,.jpg,.jpeg,.png" 
-                onChange={handleFileSelect}
-                ref={fileInputRef}
-              />
-            </label>
-            
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Supported formats: PDF, JPG, PNG
-            </p>
           </div>
-          
+
           {files.length > 0 && (
-            <div className="mt-6 space-y-4">
-              <h3 className="font-medium">Selected Files ({files.length})</h3>
-              
+            <div className="mt-6">
+              <h3 className="font-medium mb-3">Selected Files ({files.length})</h3>
               <div className="space-y-3">
                 {files.map(fileData => (
-                  <div key={fileData.id} className="flex items-center bg-slate-50 dark:bg-slate-900 p-3 rounded-md">
-                    <div className="w-10 h-10 mr-3 flex-shrink-0">
-                      {fileData.file.type.includes('pdf') ? (
-                        <div className="w-full h-full flex items-center justify-center bg-red-100 dark:bg-red-900 rounded">
-                          <span className="text-xs font-medium text-red-700 dark:text-red-300">PDF</span>
-                        </div>
-                      ) : (
-                        <div className="w-full h-full bg-cover bg-center rounded" style={{ backgroundImage: `url(${fileData.preview})` }}></div>
-                      )}
-                    </div>
-                    
+                  <div key={fileData.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded flex justify-between items-center">
                     <div className="flex-grow mr-4">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium truncate max-w-xs">{fileData.file.name}</span>
-                        <span className="text-xs text-slate-500">
-                          {(fileData.file.size / 1024 / 1024).toFixed(2)} MB
+                        <span className="font-medium truncate max-w-xs">{fileData.name}</span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          {(fileData.size / 1024 / 1024).toFixed(2)} MB
                         </span>
                       </div>
-                      
-                      {isUploading && (
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
-                          <div 
+
+                      {(isUploading || fileData.progress > 0) && (
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
+                          <div
                             className={`h-1.5 rounded-full ${fileData.error ? 'bg-red-500' : 'bg-blue-500'}`}
-                            style={{ width: `${fileData.progress}%` }}
+                            style={{ width: `${fileData.progress || 0}%` }}
                           ></div>
                         </div>
                       )}
-                      
+
                       {fileData.error && (
                         <p className="text-xs text-red-500 mt-1">{fileData.error}</p>
                       )}
                     </div>
-                    
-                    <button 
-                      onClick={() => removeFile(fileData.id)}
-                      className="p-1 text-slate-500 hover:text-red-500"
+
+                    <button
+                      onClick={() => setFiles(files.filter(f => f.id !== fileData.id))}
+                      className="text-red-500 hover:text-red-700 p-1"
                       disabled={isUploading}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
                   </div>
@@ -275,90 +391,24 @@ export default function UploadPage() {
               </div>
             </div>
           )}
-        </div>
-        
-        <div className="mb-8">
-          <h2 className="text-xl font-medium mb-4">Upload Settings</h2>
           
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label htmlFor="tags" className="block text-sm font-medium mb-1">
-                Tags (comma separated)
-              </label>
-              <input 
-                id="tags" 
-                type="text" 
-                placeholder="e.g. important, tax, 2023" 
-                className="w-full py-2 px-3 border border-slate-300 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                disabled={isUploading}
-              />
-            </div>
-          </div>
-          
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center">
-              <input 
-                id="run-ocr" 
-                type="checkbox" 
-                className="h-4 w-4 border-slate-300 rounded text-blue-600 focus:ring-blue-500"
-                checked={runOcr}
-                onChange={(e) => setRunOcr(e.target.checked)}
-                disabled={isUploading}
-              />
-              <label htmlFor="run-ocr" className="ml-2 text-sm">
-                Run OCR (extract text from document)
-              </label>
-            </div>
-            
-            <div className="flex items-center">
-              <input 
-                id="encrypt-file" 
-                type="checkbox" 
-                className="h-4 w-4 border-slate-300 rounded text-blue-600 focus:ring-blue-500"
-                checked={encryptFile}
-                onChange={(e) => setEncryptFile(e.target.checked)}
-                disabled={isUploading}
-              />
-              <label htmlFor="encrypt-file" className="ml-2 text-sm">
-                Encrypt file
-              </label>
-            </div>
-            
-            <div className="flex items-center">
-              <input 
-                id="backup-drive" 
-                type="checkbox" 
-                className="h-4 w-4 border-slate-300 rounded text-blue-600 focus:ring-blue-500"
-                checked={backupToDrive}
-                onChange={(e) => setBackupToDrive(e.target.checked)}
-                disabled={isUploading}
-              />
-              <label htmlFor="backup-drive" className="ml-2 text-sm">
-                Backup to Google Drive
-              </label>
-            </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button 
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded"
+              onClick={() => router.push('/')}
+            >
+              Cancel
+            </button>
+            <button 
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-blue-400"
+              onClick={uploadFiles}
+              disabled={isUploading || files.length === 0}
+            >
+              {isUploading ? 'Uploading...' : 'Upload Files'}
+            </button>
           </div>
         </div>
-        
-        <div className="flex justify-end space-x-4">
-          <button 
-            className="py-2 px-4 border border-slate-300 dark:border-slate-700 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            onClick={() => router.push('/')}
-            disabled={isUploading}
-          >
-            Cancel
-          </button>
-          <button 
-            className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:bg-blue-400"
-            onClick={uploadFiles}
-            disabled={isUploading || files.length === 0}
-          >
-            {isUploading ? 'Uploading...' : 'Upload Files'}
-          </button>
-        </div>
-      </div>
-    </PageLayout>
+      </SimpleLayout>
+    </DragDropProvider>
   );
 }

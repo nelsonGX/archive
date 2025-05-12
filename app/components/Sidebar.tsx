@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -12,10 +14,10 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-slate-100 dark:bg-slate-900 h-[calc(100vh-64px)] p-4 border-r border-slate-200 dark:border-slate-800">
       <div className="mb-8">
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+        <Link href="/upload" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
           <span className="text-lg">+</span>
           <span>Upload Document</span>
-        </button>
+        </Link>
       </div>
       
       <nav>

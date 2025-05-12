@@ -8,34 +8,34 @@ This project is a personal PDF archive application called "Archive" built with N
 
 ## Technology Stack
 
-- **Framework**: Next.js 14+ with App Router
+- **Framework**: Next.js 15+ with App Router
 - **Frontend**: React 19, Tailwind CSS
-- **Authentication**: NextAuth.js (to be implemented)
-- **Database**: SQLite + Prisma ORM (to be implemented)
-- **Encryption**: crypto-js or node:crypto for file encryption (to be implemented)
-- **OCR**: Tesseract.js or alternative OCR service (to be implemented)
+- **Authentication**: NextAuth.js v5 with multiple providers (implemented)
+- **Database**: SQLite + Prisma ORM v6 (implemented)
+- **Encryption**: crypto-js for file encryption (implemented)
+- **OCR**: Text extraction capability (partially implemented)
 - **Camera Access**: MediaDevices Web API, react-webcam (to be implemented)
-- **Image Processing**: 
-  - opencv.js for edge detection and perspective correction
-  - browser-image-compression for optimization
-  - jsPDF for PDF conversion
-- **Google API**: google-api-nodejs-client package (to be implemented)
+- **Image Processing**:
+  - browser-image-compression for optimization (implemented)
+  - opencv.js for edge detection and perspective correction (to be implemented)
+  - jsPDF for PDF conversion (to be implemented)
+- **Google API**: Google authentication implemented, Drive API integration (to be implemented)
 
 ## Architecture
 
 The project follows a Next.js App Router architecture:
 
-1. **Authentication Layer**: NextAuth.js with multiple provider options (to be implemented)
-2. **Multi-User System**: Role-based access control (to be implemented)
-3. **Document Storage**: Server-side encryption for PDFs (to be implemented)
+1. **Authentication Layer**: NextAuth.js with Google and Credentials providers (implemented)
+2. **Multi-User System**: Role-based access control with USER and ADMIN roles (implemented)
+3. **Document Storage**: Server-side encryption for PDFs using AES-256 (implemented)
 4. **Camera Integration**: Direct document scanning with image enhancement (to be implemented)
-5. **OCR Processing**: Text extraction from documents with encrypted storage (to be implemented)
-6. **Google Drive Integration**: Backup and import functionality (to be implemented)
-7. **Local Database**: SQLite with Prisma ORM for persistence (to be implemented)
+5. **OCR Processing**: Basic OCR support in database schema (partially implemented)
+6. **Google Drive Integration**: Google auth implemented, backup functionality (to be implemented)
+7. **Local Database**: SQLite with Prisma ORM for persistence (implemented)
 
 ## Project Status
 
-This is a new project in early development stage. Most of the specified features described in spec.md still need to be implemented. The current codebase is a basic Next.js 15 application with React 19 and Tailwind CSS configured.
+This project is in active development. The core authentication system, document storage with encryption, and database setup are implemented. The frontend components, document viewing, and upload functionality are partially implemented. The camera scanning features, OCR processing, and Google Drive integration are still in development.
 
 ## Run Project
 The user already opened a dev server, no need to run it manually. User will send feedback based on the view on browser.

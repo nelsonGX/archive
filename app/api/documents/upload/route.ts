@@ -1,9 +1,7 @@
-'use server';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/auth';
 import { prisma } from '@/app/lib/prisma';
-import { generateEncryptionKey } from '@/app/lib/encryption';
+import { generateEncryptionKey } from '@/app/lib/serverEncryption';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +22,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const tags = formData.get('tags') as string | null;
-    
+    const runOcr = formData.get('ocr') === 'true';
+
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
@@ -51,6 +50,7 @@ export async function POST(request: NextRequest) {
         encryptionIv: iv,
         size: size,
         userId: userId,
+        ocr: runOcr, // Set based on user's choice
         tags: {
           connectOrCreate: tagList.map(tagName => ({
             where: { name: tagName },
@@ -63,10 +63,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Return success with document details (excluding encryption keys)
-    const { encryptionKey: _, encryptionIv: __, ...safeDocument } = document;
-    return NextResponse.json({ 
-      document: safeDocument,
+    // Return document details with encryption keys for client-side storage
+    return NextResponse.json({
+      document: document,
+      encryptionKey: key,
+      encryptionIv: iv,
       uploadUrl: `/api/documents/storage/${uniqueFileId}` // URL for client to upload to browser storage
     }, { status: 201 });
   } catch (error) {
