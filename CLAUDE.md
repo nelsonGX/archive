@@ -21,22 +21,6 @@ This project is a personal PDF archive application called "Archive" built with N
   - jsPDF for PDF conversion
 - **Google API**: google-api-nodejs-client package (to be implemented)
 
-## Common Commands
-
-```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-
-# Lint code
-npm run lint
-```
-
 ## Architecture
 
 The project follows a Next.js App Router architecture:
@@ -52,3 +36,6 @@ The project follows a Next.js App Router architecture:
 ## Project Status
 
 This is a new project in early development stage. Most of the specified features described in spec.md still need to be implemented. The current codebase is a basic Next.js 15 application with React 19 and Tailwind CSS configured.
+
+## Run Project
+The user already opened a dev server, no need to run it manually. User will send feedback based on the view on browser.
