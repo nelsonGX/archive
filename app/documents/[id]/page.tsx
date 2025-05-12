@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import PageLayout from '@/app/components/PageLayout';
-import { getDecryptedFile } from '@/app/lib/browserStorage';
+import DocumentPreview from '@/app/components/document/DocumentPreview';
 import { processDocumentOcr } from '@/app/lib/ocr';
 
 export default function DocumentViewer() {
@@ -12,35 +12,29 @@ export default function DocumentViewer() {
   const [document, setDocument] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState<string | null>(null);
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
-  
+
   useEffect(() => {
     const fetchDocument = async () => {
       try {
         const id = Array.isArray(params.id) ? params.id[0] : params.id;
-        
+
         // Fetch document metadata
         const response = await fetch(`/api/documents/${id}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch document');
         }
-        
+
         const { document } = await response.json();
         setDocument(document);
-
-        // Get document content from browser storage
-        // Note: In a real app, we'd need to fetch the encryption keys and use them
-        // For demo purposes, we're just setting a placeholder URL
-        setFileUrl('/file.svg');
 
         // If OCR data exists, set it
         if (document.ocr && document.ocrData) {
           setOcrText(document.ocrData);
         }
-        
+
       } catch (error) {
         console.error('Error fetching document:', error);
         setError(error instanceof Error ? error.message : 'An error occurred');
@@ -48,7 +42,7 @@ export default function DocumentViewer() {
         setIsLoading(false);
       }
     };
-    
+
     fetchDocument();
   }, [params.id]);
 
@@ -270,23 +264,8 @@ export default function DocumentViewer() {
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            {/* Document preview placeholder */}
-            <div className="min-h-[50vh] flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-700 rounded-lg">
-              <div className="text-center p-8">
-                <img src={fileUrl || '/file.svg'} alt="Document" className="w-24 h-24 mx-auto mb-4" />
-                <p className="text-lg font-medium mb-2">Preview not available</p>
-                <p className="text-slate-500 dark:text-slate-400 mb-4">
-                  This is a placeholder for document preview. In a complete implementation,
-                  this would show the actual document content.
-                </p>
-                <button
-                  onClick={handleDownload}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  Download to view
-                </button>
-              </div>
-            </div>
+            {/* Document preview */}
+            {document && <DocumentPreview document={document} height={500} />}
 
             {document.tags && document.tags.length > 0 && (
               <div className="mt-6">

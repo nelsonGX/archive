@@ -1,12 +1,14 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth } from '@/app/auth';
-import { signOutAction } from '@/app/actions/auth';
+import { signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 
-export default async function Header() {
-  const session = await auth();
+export default function Header() {
+  const { data: session } = useSession();
   const user = session?.user;
-  
+
   return (
     <header className="bg-slate-800 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
@@ -36,11 +38,11 @@ export default async function Header() {
                 <li>
                   <div className="flex items-center gap-2">
                     {user.image && (
-                      <Image 
-                        src={user.image} 
-                        alt="Profile" 
-                        width={32} 
-                        height={32} 
+                      <Image
+                        src={user.image}
+                        alt="Profile"
+                        width={32}
+                        height={32}
                         className="rounded-full"
                       />
                     )}
@@ -48,14 +50,12 @@ export default async function Header() {
                   </div>
                 </li>
                 <li>
-                  <form action={signOutAction}>
-                    <button
-                      type="submit"
-                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors"
-                    >
-                      Sign Out
-                    </button>
-                  </form>
+                  <button
+                    onClick={() => signOut()}
+                    className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors"
+                  >
+                    Sign Out
+                  </button>
                 </li>
               </>
             ) : (

@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   noStore();
-  
+
   try {
     // Check authentication
     const session = await auth();
@@ -19,7 +19,8 @@ export async function GET(
     }
 
     const userId = session.user.id;
-    const documentId = params.id;
+    // Ensure we handle params properly for Next.js
+    const { id: documentId } = params;
     
     // Get the document
     const document = await prisma.document.findUnique({
@@ -48,10 +49,7 @@ export async function GET(
       // For downloads, we'll return the document with encryption keys
       // so the client can decrypt it from browser storage
       return NextResponse.json({
-        document: {
-          ...document,
-          downloadMode: true
-        }
+        document: document // Return the full document including encryption keys
       });
     }
     
@@ -72,7 +70,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   noStore();
-  
+
   try {
     // Check authentication
     const session = await auth();
@@ -81,7 +79,8 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const documentId = params.id;
+    // Ensure we handle params properly for Next.js
+    const { id: documentId } = params;
     
     // Get the document
     const document = await prisma.document.findUnique({
