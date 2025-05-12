@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth, signOut } from '@/app/auth';
+import { auth } from '@/app/auth';
+import { signOutAction } from '@/app/actions/auth';
 
 export default async function Header() {
   const session = await auth();
@@ -47,11 +48,8 @@ export default async function Header() {
                   </div>
                 </li>
                 <li>
-                  <form action={async () => {
-                    'use server';
-                    await signOut();
-                  }}>
-                    <button 
+                  <form action={signOutAction}>
+                    <button
                       type="submit"
                       className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors"
                     >

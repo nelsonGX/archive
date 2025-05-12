@@ -3,7 +3,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { auth } from '@/app/auth';
 import { prisma } from '@/app/lib/prisma';
-import { formatDistanceToNow } from 'date-fns';
 
 async function getDocuments() {
   const session = await auth();
@@ -156,7 +155,7 @@ export default async function Home() {
                       </h3>
                     </Link>
                     <div className="flex justify-between text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      <span>{formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}</span>
+                      <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
                       <span>{(doc.size / 1024 / 1024).toFixed(2)} MB</span>
                     </div>
                     {doc.tags.length > 0 && (
