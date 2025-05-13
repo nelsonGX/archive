@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { X, Zap, RotateCcw, FlipHorizontal, Camera } from 'lucide-react';
 import { Resolution } from './ResolutionSelect';
 import { 
@@ -114,17 +114,48 @@ export default function ScannerCamera({
     };
   }, [deviceId, resolution, cameraSupported]);
 
+  // Helper function to add a result to previousResults - avoid direct state update in useEffect
+  const addResultToQueue = useCallback((quad: any) => {
+    setPreviousResults(prev => {
+      const updated = [...prev, quad];
+      if (updated.length > 3) {
+        updated.shift();
+      }
+      return updated;
+    });
+  }, []);
+
+  // Capture function to avoid recreating in useEffect dependency
+  const captureImage = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/jpeg');
+      onCapture(imageData, detectedQuad);
+    }
+  }, [onCapture, detectedQuad]);
+
   // Set up document detection
   useEffect(() => {
     if (!cameraSupported || error) return;
     
     let detectionInterval: NodeJS.Timeout | null = null;
+    let isComponentMounted = true;
     
     const startDetecting = () => {
       setDetecting(false);
-      setPreviousResults([]);
+      setPreviousResults([]); 
       
       detectionInterval = setInterval(async () => {
+        if (!isComponentMounted) return;
         if (detecting || !videoRef.current || !svgRef.current || !hiddenCanvasRef.current) return;
         
         setDetecting(true);
@@ -156,9 +187,13 @@ export default function ScannerCamera({
           // Use mock detection for document detection
           const quads = await mockDetection.detectQuad(canvas);
           
+          if (!isComponentMounted) return;
+          
           setDetecting(false);
           
           const svg = svgRef.current;
+          if (!svg) return;
+          
           svg.setAttribute("viewBox", `0 0 ${video.videoWidth} ${video.videoHeight}`);
           
           if (quads.length > 0) {
@@ -170,20 +205,17 @@ export default function ScannerCamera({
             
             // Draw the detected quad on the overlay
             drawPolygonOnSvg(quad.location.points, svg);
+            
+            if (!isComponentMounted) return;
             setDetectedQuad(quad);
             
             if (autoCapture) {
               // Handle auto capture logic
-              const newResults = [...previousResults, quad];
-              setPreviousResults(prev => {
-                const updated = [...prev, quad];
-                if (updated.length > 3) {
-                  updated.shift();
-                }
-                return updated;
-              });
+              addResultToQueue(quad);
               
-              if (newResults.length >= 3 && isSteady(newResults)) {
+              // Check if the document is stable using the previous results + new quad
+              const results = [...previousResults, quad];
+              if (results.length >= 3 && isSteady(results)) {
                 captureImage();
               }
             }
@@ -193,23 +225,38 @@ export default function ScannerCamera({
           }
         } catch (error) {
           console.error('Error during document detection:', error);
-          setDetecting(false);
+          if (isComponentMounted) {
+            setDetecting(false);
+          }
         }
       }, 300);
     };
     
-    if (videoRef.current && videoRef.current.readyState >= 2) {
-      startDetecting();
-    } else if (videoRef.current) {
-      videoRef.current.onloadeddata = startDetecting;
+    // Start detection when video is loaded
+    const handleVideoLoaded = () => {
+      if (videoRef.current && videoRef.current.readyState >= 2) {
+        startDetecting();
+      }
+    };
+    
+    if (videoRef.current) {
+      if (videoRef.current.readyState >= 2) {
+        startDetecting();
+      } else {
+        videoRef.current.onloadeddata = handleVideoLoaded;
+      }
     }
     
     return () => {
+      isComponentMounted = false;
       if (detectionInterval) {
         clearInterval(detectionInterval);
       }
+      if (videoRef.current) {
+        videoRef.current.onloadeddata = null;
+      }
     };
-  }, [autoCapture, detecting, error, cameraSupported, previousResults]);
+  }, [autoCapture, error, cameraSupported, addResultToQueue, captureImage]);
 
   const toggleTorch = async () => {
     if (!stream) return;
@@ -224,23 +271,6 @@ export default function ScannerCamera({
       }
     } catch (error) {
       console.error('Error toggling torch:', error);
-    }
-  };
-
-  const captureImage = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL('image/jpeg');
-      onCapture(imageData, detectedQuad);
     }
   };
 
@@ -304,6 +334,11 @@ export default function ScannerCamera({
       </div>
     );
   }
+
+  // Toggle auto capture - memoize to avoid recreation in useEffect dependencies
+  const toggleAutoCapture = useCallback(() => {
+    setAutoCapture(prev => !prev);
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black z-50">
@@ -376,7 +411,7 @@ export default function ScannerCamera({
           
           <button 
             type="button"
-            onClick={() => setAutoCapture(!autoCapture)}
+            onClick={toggleAutoCapture}
             className={`text-white p-3 z-20 ${autoCapture ? 'text-green-500' : ''}`}
             aria-label="Toggle auto capture"
           >

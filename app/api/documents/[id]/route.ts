@@ -7,7 +7,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   noStore();
 
@@ -19,8 +19,8 @@ export async function GET(
     }
 
     const userId = session.user.id;
-    // Ensure we handle params properly for Next.js
-    const { id: documentId } = params;
+    // Get document ID directly from context.params without destructuring
+    const documentId = context.params.id;
     
     // Get the document
     const document = await prisma.document.findUnique({
@@ -67,7 +67,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   noStore();
 
@@ -79,8 +79,8 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    // Ensure we handle params properly for Next.js
-    const { id: documentId } = params;
+    // Get document ID directly from context.params without destructuring
+    const documentId = context.params.id;
     
     // Get the document
     const document = await prisma.document.findUnique({

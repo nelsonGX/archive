@@ -9,6 +9,7 @@ interface SimplePdfViewerProps {
   encryptionIv: string;
   height?: number;
   documentName: string;
+  isServerStored?: boolean;
 }
 
 export default function SimplePdfViewer({
@@ -16,7 +17,8 @@ export default function SimplePdfViewer({
   encryptionKey,
   encryptionIv,
   documentName,
-  height = 600
+  height = 600,
+  isServerStored = false
 }: SimplePdfViewerProps) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,8 +33,18 @@ export default function SimplePdfViewer({
         setIsLoading(true);
         setError(null);
 
-        // Get the decrypted file from browser storage
-        const fileData = await getDecryptedFile(fileId, encryptionKey, encryptionIv);
+        // Get the file data - either from server or browser storage
+        let fileData;
+        if (isServerStored) {
+          // Get the file directly from the server's document download endpoint
+          const documentId = fileId.split('/').pop()?.split('.')[0] || '';
+          const response = await fetch(`/api/documents/download?id=${documentId}`);
+          if (!response.ok) throw new Error('Failed to fetch document from server');
+          fileData = await response.arrayBuffer();
+        } else {
+          // Get the decrypted file from browser storage
+          fileData = await getDecryptedFile(fileId, encryptionKey, encryptionIv);
+        }
         
         // Create a blob from the decrypted data
         const blob = new Blob([fileData], { type: 'application/pdf' });
@@ -62,8 +74,18 @@ export default function SimplePdfViewer({
 
   const handleDownload = async () => {
     try {
-      // Get the decrypted file from browser storage
-      const fileData = await getDecryptedFile(fileId, encryptionKey, encryptionIv);
+      // Get the file data - either from server or browser storage
+      let fileData;
+      if (isServerStored) {
+        // Get the file directly from the server's document download endpoint
+        const documentId = fileId.split('/').pop()?.split('_')[0] || '';
+        const response = await fetch(`/api/documents/download?id=${documentId}`);
+        if (!response.ok) throw new Error('Failed to fetch document from server');
+        fileData = await response.arrayBuffer();
+      } else {
+        // Get the decrypted file from browser storage
+        fileData = await getDecryptedFile(fileId, encryptionKey, encryptionIv);
+      }
       
       // Create a blob from the decrypted data
       const blob = new Blob([fileData], { type: 'application/pdf' });

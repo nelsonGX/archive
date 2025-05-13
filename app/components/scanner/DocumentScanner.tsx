@@ -57,6 +57,7 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
   const [detectedQuad, setDetectedQuad] = useState<Quad | null>(null);
   const [normalizedImage, setNormalizedImage] = useState<string | null>(null);
   const [scannedDocuments, setScannedDocuments] = useState<ScannedDocument[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Handlers for camera setup
   const handleDeviceSelect = useCallback((deviceId: string) => {
@@ -144,8 +145,19 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
   
   // Handler for completing the scanning process
   const handleComplete = useCallback(() => {
-    onComplete(scannedDocuments);
-    setMode('complete');
+    setIsProcessing(true);
+    // Small timeout to allow UI to update before potentially heavy PDF operation
+    setTimeout(() => {
+      try {
+        onComplete(scannedDocuments);
+        setMode('complete');
+      } catch (error) {
+        console.error('Error completing scan:', error);
+        alert('There was an error processing your documents. Please try again.');
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 100);
   }, [scannedDocuments, onComplete]);
   
   // Render different UI based on the current mode
@@ -321,9 +333,9 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
               : 'bg-blue-600 hover:bg-blue-700 text-white transition-colors'
           }`}
           onClick={handleComplete}
-          disabled={scannedDocuments.length === 0}
+          disabled={scannedDocuments.length === 0 || isProcessing}
         >
-          Create PDF
+          {isProcessing ? 'Processing...' : 'Create PDF'}
         </button>
       </div>
     </div>

@@ -146,124 +146,193 @@ export default function ResultViewer({
     return processedImages[selectedFilter] || imageUrl;
   };
 
-  const handleConfirm = () => {
-    // If we need to apply rotation to the image before confirming
-    if (rotation !== 0 && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const img = new Image();
-      
-      img.onload = () => {
-        canvas.width = rotation % 180 === 0 ? img.width : img.height;
-        canvas.height = rotation % 180 === 0 ? img.height : img.width;
+  function handleConfirmClick() {
+    console.log("Confirm clicked");
+    try {
+      // If we need to apply rotation to the image before confirming
+      if (rotation !== 0 && canvasRef.current) {
+        const canvas = canvasRef.current;
+        const img = new Image();
         
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.translate(canvas.width / 2, canvas.height / 2);
-          ctx.rotate((rotation * Math.PI) / 180);
-          ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        // Create a flag to avoid stale references
+        let isCurrentConfirmation = true;
+        
+        img.onload = () => {
+          // Skip if another confirm happened
+          if (!isCurrentConfirmation) return;
           
-          const rotatedImageUrl = canvas.toDataURL('image/jpeg');
-          onConfirm(rotatedImageUrl);
-        }
-      };
-      
-      img.src = getCurrentImage() || imageUrl;
-    } else {
-      onConfirm(getCurrentImage() || imageUrl);
+          canvas.width = rotation % 180 === 0 ? img.width : img.height;
+          canvas.height = rotation % 180 === 0 ? img.height : img.width;
+          
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((rotation * Math.PI) / 180);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+            
+            const rotatedImageUrl = canvas.toDataURL('image/jpeg');
+            // Delay execution to ensure Safari handles events correctly
+            setTimeout(() => {
+              if (isCurrentConfirmation) {
+                onConfirm(rotatedImageUrl);
+              }
+            }, 50); // Small delay to ensure button click is completed first
+          }
+        };
+        
+        img.src = getCurrentImage() || imageUrl;
+        
+        // Clean up function
+        return () => {
+          isCurrentConfirmation = false;
+        };
+      } else {
+        // Delay execution to ensure Safari handles events correctly
+        setTimeout(() => {
+          onConfirm(getCurrentImage() || imageUrl);
+        }, 50); // Small delay to ensure button click is completed first
+      }
+    } catch (error) {
+      console.error("Error in confirm handler:", error);
     }
-  };
+  }
+
+  function handleCancelClick() {
+    console.log("Cancel clicked");
+    try {
+      onCancel();
+    } catch (error) {
+      console.error("Error in cancel handler:", error);
+    }
+  }
+
+  function handleRotateClick() {
+    console.log("Rotate clicked");
+    rotateImage();
+  }
+
+  function handleFiltersToggle() {
+    console.log("Filters toggle clicked");
+    setShowFilters(!showFilters);
+  }
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      {/* Hidden canvas for image processing */}
-      <canvas ref={canvasRef} className="hidden" />
-      
-      {/* Top toolbar */}
-      <div className="h-12 bg-black/80 flex items-center justify-between px-4 z-10">
-        <button 
-          type="button"
-          className="text-white p-2 z-20" 
-          onClick={rotateImage}
-          aria-label="Rotate image"
-        >
-          <RotateCcw size={24} />
-        </button>
+    <>
+      {/* Main Image Container */}
+      <div className="fixed inset-0 bg-black z-50">
+        {/* Hidden canvas for image processing */}
+        <canvas ref={canvasRef} className="hidden" />
         
-        <button 
-          type="button"
-          className={`text-white p-2 z-20 ${showFilters ? 'bg-white/20 rounded' : ''}`}
-          onClick={() => setShowFilters(!showFilters)}
-          aria-label="Show filters"
-        >
-          <Sliders size={24} />
-        </button>
-      </div>
-      
-      {/* Filter options */}
-      {showFilters && (
-        <div className="h-16 bg-black/80 flex items-center px-4 space-x-4 z-10">
-          {FILTER_OPTIONS.map((filter) => (
-            <div
-              key={filter.id}
-              className="flex flex-col items-center"
-              onClick={() => handleFilterSelect(filter.id)}
-            >
-              <div 
-                className={`w-12 h-10 flex items-center justify-center rounded ${
-                  selectedFilter === filter.id ? 'border border-blue-500' : ''
-                }`}
+        {/* Main Container with padding for fixed headers/footers */}
+        <div className="absolute inset-0 flex flex-col pt-12 pb-16">
+          {/* Image container */}
+          <div className="flex-1 flex items-center justify-center p-4 bg-black overflow-hidden">
+            {isProcessing ? (
+              <div className="text-white">Processing image...</div>
+            ) : (
+              <img
+                src={getCurrentImage() || imageUrl}
+                alt="Processed document"
+                className="max-w-full max-h-full object-contain"
+                style={{ transform: `rotate(${rotation}deg)` }}
+              />
+            )}
+          </div>
+        </div>
+        
+        {/* Top toolbar - Absolutely positioned */}
+        <div className="absolute top-0 left-0 right-0 h-12 bg-black/80 flex items-center justify-center z-[1000]">
+          <div className="text-white text-sm font-bold">Adjust Image</div>
+        </div>
+        
+        {/* Filter options - Only shown when toggled */}
+        {showFilters && (
+          <div 
+            className="absolute top-12 left-0 right-0 h-16 bg-black/90 flex items-center justify-center px-4 space-x-6 z-[1000]"
+          >
+            {FILTER_OPTIONS.map((filter) => (
+              <div
+                key={filter.id}
+                className="flex flex-col items-center"
+                onClick={() => handleFilterSelect(filter.id)}
               >
                 <div 
-                  className={`w-10 h-8 bg-cover bg-center rounded ${
-                    !processedImages[filter.id] ? 
-                    (filter.id === 'blackWhite' ? 'bg-gray-300' : 
-                    filter.id === 'grayscale' ? 'bg-gray-500' : 'bg-blue-500') : ''
+                  className={`w-12 h-10 flex items-center justify-center rounded p-1 ${
+                    selectedFilter === filter.id ? 'bg-purple-600 border border-white' : 'bg-gray-700'
                   }`}
-                  style={processedImages[filter.id] ? {
-                    backgroundImage: `url(${processedImages[filter.id]})`
-                  } : undefined}
-                ></div>
+                >
+                  <div 
+                    className={`w-full h-full bg-cover bg-center rounded`}
+                    style={processedImages[filter.id] ? {
+                      backgroundImage: `url(${processedImages[filter.id]})`
+                    } : {
+                      backgroundColor: filter.id === 'blackWhite' ? '#fff' : 
+                                       filter.id === 'grayscale' ? '#aaa' : '#5e97f6'
+                    }}
+                  ></div>
+                </div>
+                <span className="text-white text-xs mt-1">{filter.label}</span>
               </div>
-              <span className="text-white text-xs mt-1">{filter.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Image container */}
-      <div className="flex-1 flex items-center justify-center p-4 bg-black">
-        {isProcessing ? (
-          <div className="text-white">Processing image...</div>
-        ) : (
-          <img
-            src={getCurrentImage() || imageUrl}
-            alt="Processed document"
-            className="max-w-full max-h-full object-contain"
-            style={{ transform: `rotate(${rotation}deg)` }}
-          />
+            ))}
+          </div>
         )}
+        
+        {/* Bottom toolbar */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-black/80 z-[1000] flex justify-center"></div>
       </div>
-      
-      {/* Bottom toolbar */}
-      <div className="h-16 bg-black/80 flex items-center justify-between px-8 z-10">
+
+      {/* Buttons in completely separate containers outside the main component flow */}
+      {/* Rotate Button - Fixed positioned */}
+      <div className="fixed top-0 left-0 p-2 z-[9999]">
         <button 
           type="button"
-          className="text-white p-3 z-20"
-          onClick={onCancel}
+          className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center"
+          onClick={handleRotateClick}
+          style={{ touchAction: 'manipulation' }}
+          aria-label="Rotate image"
+        >
+          <RotateCcw size={28} />
+        </button>
+      </div>
+      
+      {/* Filter Button - Fixed positioned */}
+      <div className="fixed top-0 right-0 p-2 z-[9999]">
+        <button 
+          type="button"
+          className={`w-14 h-14 text-white rounded-full shadow-lg flex items-center justify-center ${showFilters ? 'bg-purple-600' : 'bg-blue-600'}`}
+          onClick={handleFiltersToggle}
+          style={{ touchAction: 'manipulation' }}
+          aria-label="Toggle filters"
+        >
+          <Sliders size={28} />
+        </button>
+      </div>
+
+      {/* Cancel Button - Fixed positioned */}
+      <div className="fixed bottom-0 left-0 p-4 z-[9999]">
+        <button 
+          type="button"
+          className="w-16 h-16 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center"
+          onClick={handleCancelClick}
+          style={{ touchAction: 'manipulation' }}
           aria-label="Cancel"
         >
-          <X size={28} />
-        </button>
-        
-        <button 
-          type="button"
-          className="text-white p-3 z-20"
-          onClick={handleConfirm}
-          aria-label="Confirm"
-        >
-          <Check size={28} />
+          <X size={32} />
         </button>
       </div>
-    </div>
+      
+      {/* Confirm Button - Fixed positioned */}
+      <div className="fixed bottom-0 right-0 p-4 z-[9999]">
+        <button 
+          type="button"
+          className="w-16 h-16 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center"
+          onClick={handleConfirmClick}
+          style={{ touchAction: 'manipulation' }}
+          aria-label="Confirm"
+        >
+          <Check size={32} />
+        </button>
+      </div>
+    </>
   );
 }

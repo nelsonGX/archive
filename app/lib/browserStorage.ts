@@ -2,6 +2,53 @@
 
 import { generateEncryptionKey, encryptData, decryptData } from './encryption';
 
+/**
+ * Encrypts and saves a file to browser storage
+ * @param fileId File ID to use
+ * @param data File data as Uint8Array
+ * @param encryptionKey Encryption key
+ * @param encryptionIv Initialization vector
+ * @returns Promise that resolves when complete
+ */
+export async function encryptAndSaveToStorage(
+  fileId: string,
+  data: Uint8Array,
+  encryptionKey: string,
+  encryptionIv: string
+): Promise<void> {
+  try {
+    // Encrypt the data
+    const encryptedData = encryptData(data, encryptionKey, encryptionIv);
+
+    // Store in IndexedDB
+    const db = await openDatabase();
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([FILE_STORE], 'readwrite');
+      const store = transaction.objectStore(FILE_STORE);
+
+      const fileObject = {
+        id: fileId,
+        encryptedData,
+        originalName: fileId,
+        createdAt: new Date().toISOString()
+      };
+
+      const request = store.add(fileObject);
+
+      request.onsuccess = () => {
+        resolve();
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to store file'));
+      };
+    });
+  } catch (error) {
+    console.error('Error in encryptAndSaveToStorage:', error);
+    throw new Error('Failed to encrypt and save file to storage');
+  }
+}
+
 const DB_NAME = 'archiveDB';
 const DB_VERSION = 1;
 const FILE_STORE = 'files';

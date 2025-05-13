@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Check, X } from 'lucide-react';
 
 interface Point {
@@ -140,7 +140,8 @@ export default function ImageCropper({
   // Handle mouse/touch interactions with improved touch support
   useEffect(() => {
     if (!quad || !canvasRef.current) return;
-
+    
+    const isMounted = { current: true };
     const canvas = canvasRef.current;
 
     const getEventPoint = (e: MouseEvent | TouchEvent): Point => {
@@ -186,110 +187,155 @@ export default function ImageCropper({
         }
       });
 
-      // Increased the tap target size for mobile (from 20 to 40)
-      return minDistance < 40 / scale ? cornerIndex : -1;
+      // Increased the tap target size for mobile (from 40 to 50)
+      return minDistance < 50 / scale ? cornerIndex : -1;
     };
 
-    const onMouseDown = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault(); // Prevent default behavior for both mouse and touch
-      const point = getEventPoint(e);
+    // Use pointer events instead of separate mouse/touch events
+    const onPointerDown = (e: PointerEvent) => {
+      // Skip if this is a button or something else
+      if (e.target !== canvas) return;
+      
+      e.preventDefault();
+      const point = getEventPoint(e as any);
       const cornerIndex = findNearestCorner(point);
       
-      if (cornerIndex >= 0) {
+      if (cornerIndex >= 0 && isMounted.current) {
         setSelectedCorner(cornerIndex);
+        // Set pointer capture to ensure all events go to the canvas
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
       }
     };
 
-    const onMouseMove = (e: MouseEvent | TouchEvent) => {
+    const onPointerMove = (e: PointerEvent) => {
       if (selectedCorner === null) return;
       
-      e.preventDefault(); // Prevent default behavior for both mouse and touch
-      const point = getEventPoint(e);
+      e.preventDefault();
+      const point = getEventPoint(e as any);
       
-      setQuad(prev => {
-        if (!prev) return prev;
-        
-        const newPoints = [...prev.points];
-        newPoints[selectedCorner] = point;
-        
-        return { points: newPoints };
-      });
+      if (isMounted.current) {
+        setQuad(prev => {
+          if (!prev) return prev;
+          
+          const newPoints = [...prev.points];
+          newPoints[selectedCorner] = point;
+          
+          return { points: newPoints };
+        });
+      }
     };
 
-    const onMouseUp = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault(); // Prevent default behavior for both mouse and touch
-      setSelectedCorner(null);
+    const onPointerUp = (e: PointerEvent) => {
+      e.preventDefault();
+      
+      // Release pointer capture
+      if (e.target === canvas) {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+      
+      if (isMounted.current) {
+        setSelectedCorner(null);
+      }
     };
 
-    // Add event listeners for both mouse and touch
-    canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('touchstart', onMouseDown, { passive: false });
-    
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('touchmove', onMouseMove, { passive: false });
-    
-    window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('touchend', onMouseUp, { passive: false });
+    // Add pointer event listeners
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
 
     return () => {
+      isMounted.current = false;
+      
       // Clean up event listeners
-      canvas.removeEventListener('mousedown', onMouseDown);
-      canvas.removeEventListener('touchstart', onMouseDown);
-      
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onMouseMove);
-      
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('touchend', onMouseUp);
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointermove', onPointerMove);
+      canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
     };
   }, [quad, selectedCorner, scale]);
 
-  const handleConfirm = () => {
-    if (quad) {
-      onConfirm(quad);
+  function handleCancelClick() {
+    console.log("Cancel clicked");
+    try {
+      onCancel();
+    } catch (error) {
+      console.error("Error in cancel handler:", error);
     }
-  };
+  }
+
+  function handleConfirmClick() {
+    console.log("Confirm clicked");
+    try {
+      if (quad) {
+        onConfirm(quad);
+      }
+    } catch (error) {
+      console.error("Error in confirm handler:", error);
+    }
+  }
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      <div className="h-12 bg-black/80 flex items-center justify-between px-4 z-10">
+    <>
+      {/* The main canvas container */}
+      <div className="fixed inset-0 bg-black z-50">
+        {/* Main Canvas Area */}
+        <div className="absolute inset-0 flex flex-col pt-12 pb-8">
+          <div 
+            ref={containerRef}
+            className="flex-1 relative overflow-hidden"
+          >
+            <img
+              ref={imgRef}
+              src={imageUrl}
+              alt="Document to crop"
+              className="absolute hidden"
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 m-auto max-w-full max-h-full"
+              style={{ touchAction: 'none' }} /* Disable browser handling of touch gestures */
+            />
+          </div>
+        </div>
+        
+        {/* Header - Absolutely positioned */}
+        <div className="absolute top-0 left-0 right-0 h-12 bg-black/80 flex items-center justify-between px-4 z-[1000]">
+          <div className="text-white text-sm font-bold">Adjust corners</div>
+        </div>
+        
+        {/* Footer - Absolutely positioned */}
+        <div className="absolute bottom-0 left-0 right-0 text-center text-white text-sm py-2 bg-black/80 z-[1000]">
+          Drag the corners to adjust the document boundaries
+        </div>
+      </div>
+
+      {/* Buttons in completely separate containers outside the main component flow */}
+      {/* Cancel Button */}
+      <div className="fixed top-0 left-0 p-2 z-[9999]">
         <button 
           type="button"
-          className="text-white p-2 z-20"
-          onClick={onCancel}
+          className="w-14 h-14 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center"
+          onClick={handleCancelClick}
+          style={{ touchAction: 'manipulation' }}
+          aria-label="Cancel"
         >
-          <X size={24} />
-        </button>
-        <div className="text-white text-sm">Adjust corners</div>
-        <button 
-          type="button"
-          className="text-white p-2 z-20"
-          onClick={handleConfirm}
-        >
-          <Check size={24} />
+          <X size={28} />
         </button>
       </div>
       
-      <div 
-        ref={containerRef}
-        className="flex-1 relative overflow-hidden"
-      >
-        <img
-          ref={imgRef}
-          src={imageUrl}
-          alt="Document to crop"
-          className="absolute hidden"
-        />
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 m-auto max-w-full max-h-full"
-          style={{ touchAction: 'none' }} /* Disable browser handling of touch gestures */
-        />
+      {/* Confirm Button */}
+      <div className="fixed top-0 right-0 p-2 z-[9999]">
+        <button 
+          type="button"
+          className="w-14 h-14 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center"
+          onClick={handleConfirmClick}
+          style={{ touchAction: 'manipulation' }}
+          aria-label="Confirm"
+        >
+          <Check size={28} />
+        </button>
       </div>
-      
-      <div className="text-center text-white text-sm py-2 bg-black/80 z-10">
-        Drag the corners to adjust the document boundaries
-      </div>
-    </div>
+    </>
   );
 }
