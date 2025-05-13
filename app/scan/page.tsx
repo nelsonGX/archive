@@ -118,7 +118,7 @@ export default function ScanPage() {
     <PageLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Document Scanner</h1>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-zinc-500 dark:text-zinc-400">
           Use your camera to scan and digitize documents
         </p>
       </div>
@@ -136,9 +136,9 @@ export default function ScanPage() {
       )}
 
       {pdfUrl ? (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
           <div className="mb-8">
-            <div className="w-full aspect-video bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+            <div className="w-full aspect-video bg-zinc-100 dark:bg-zinc-700 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
               <iframe 
                 src={pdfUrl} 
                 className="w-full h-full border-0" 
@@ -148,13 +148,13 @@ export default function ScanPage() {
           </div>
           
           <div className="mb-6">
-            <label htmlFor="documentName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="documentName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
               Document Name
             </label>
             <input
               type="text"
               id="documentName"
-              className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="w-full p-2 border border-zinc-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               value={documentName}
               onChange={(e) => setDocumentName(e.target.value)}
               placeholder="Enter document name"
@@ -163,7 +163,7 @@ export default function ScanPage() {
           
           <div className="flex justify-end space-x-4">
             <button
-              className="py-2 px-4 border border-slate-300 dark:border-slate-700 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center"
+              className="py-2 px-4 border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center"
               onClick={handleScanMore}
               disabled={isSaving}
             >
@@ -191,10 +191,10 @@ export default function ScanPage() {
       ) : (
         <>
           {isGenerating ? (
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 flex flex-col items-center justify-center py-12">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6 flex flex-col items-center justify-center py-12">
               <FilePlus2 className="h-16 w-16 text-blue-600 animate-pulse mb-4" />
               <h2 className="text-xl font-semibold mb-2">Creating PDF...</h2>
-              <p className="text-slate-500 dark:text-slate-400">
+              <p className="text-zinc-500 dark:text-zinc-400">
                 Please wait while we generate your document
               </p>
             </div>

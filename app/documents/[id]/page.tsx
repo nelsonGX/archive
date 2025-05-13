@@ -213,7 +213,7 @@ export default function DocumentViewer() {
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold mb-2">{document.name}</h1>
-          <p className="text-slate-500">
+          <p className="text-zinc-500">
             {new Date(document.createdAt).toLocaleDateString()} • {(document.size / 1024 / 1024).toFixed(2)} MB
             {document.ocr && <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">OCR processed</span>}
           </p>
@@ -261,7 +261,7 @@ export default function DocumentViewer() {
         </div>
       </div>
       
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             {/* Document preview */}
@@ -274,7 +274,7 @@ export default function DocumentViewer() {
                   {document.tags.map((tag: any) => (
                     <span
                       key={tag.id}
-                      className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-300 px-3 py-1 rounded-full text-sm"
+                      className="bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-300 px-3 py-1 rounded-full text-sm"
                     >
                       {tag.name}
                     </span>
@@ -299,27 +299,27 @@ export default function DocumentViewer() {
             </div>
 
             {isProcessingOcr ? (
-              <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 min-h-[50vh] flex items-center justify-center">
+              <div className="bg-zinc-100 dark:bg-zinc-700 rounded-lg p-4 min-h-[50vh] flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin h-10 w-10 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
                   <p>Processing document with OCR...</p>
-                  <p className="text-sm text-slate-500 mt-2">This may take a few moments</p>
+                  <p className="text-sm text-zinc-500 mt-2">This may take a few moments</p>
                 </div>
               </div>
             ) : ocrText ? (
-              <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 min-h-[50vh] overflow-auto">
+              <div className="bg-zinc-100 dark:bg-zinc-700 rounded-lg p-4 min-h-[50vh] overflow-auto">
                 <pre className="whitespace-pre-wrap font-mono text-sm">
                   {ocrText}
                 </pre>
               </div>
             ) : (
-              <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 min-h-[50vh] flex items-center justify-center">
+              <div className="bg-zinc-100 dark:bg-zinc-700 rounded-lg p-4 min-h-[50vh] flex items-center justify-center">
                 <div className="text-center max-w-md">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <p className="text-lg font-medium mb-2">No OCR data available</p>
-                  <p className="text-slate-500 dark:text-slate-400 mb-4">
+                  <p className="text-zinc-500 dark:text-zinc-400 mb-4">
                     Click the "Process OCR" button to extract text from this document.
                     This will allow you to search the document's content later.
                   </p>

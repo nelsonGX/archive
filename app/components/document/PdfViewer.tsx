@@ -149,7 +149,7 @@ export default function PdfViewer({
 
   if (isLoading || !pdfJs) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
         <p>Loading PDF viewer...</p>
       </div>
@@ -158,7 +158,7 @@ export default function PdfViewer({
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4 max-w-lg text-center">
           <p>{error}</p>
         </div>
@@ -168,7 +168,7 @@ export default function PdfViewer({
 
   if (!pdfDocument) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
         <p>Loading document...</p>
       </div>
@@ -177,12 +177,12 @@ export default function PdfViewer({
 
   return (
     <div className="flex flex-col w-full">
-      <div className="bg-slate-200 dark:bg-slate-600 p-2 rounded-t-lg flex justify-between items-center">
+      <div className="bg-zinc-200 dark:bg-zinc-600 p-2 rounded-t-lg flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <button
             onClick={goToPreviousPage}
             disabled={currentPage <= 1}
-            className={`p-1 rounded ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300 dark:hover:bg-slate-500'}`}
+            className={`p-1 rounded ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-300 dark:hover:bg-zinc-500'}`}
             aria-label="Previous page"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,7 +195,7 @@ export default function PdfViewer({
           <button
             onClick={goToNextPage}
             disabled={currentPage >= numPages}
-            className={`p-1 rounded ${currentPage >= numPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-300 dark:hover:bg-slate-500'}`}
+            className={`p-1 rounded ${currentPage >= numPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-300 dark:hover:bg-zinc-500'}`}
             aria-label="Next page"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,7 +206,7 @@ export default function PdfViewer({
         <div className="flex items-center space-x-2">
           <button
             onClick={zoomOut}
-            className="p-1 rounded hover:bg-slate-300 dark:hover:bg-slate-500"
+            className="p-1 rounded hover:bg-zinc-300 dark:hover:bg-zinc-500"
             aria-label="Zoom out"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -216,7 +216,7 @@ export default function PdfViewer({
           <span>{Math.round(scale * 100)}%</span>
           <button
             onClick={zoomIn}
-            className="p-1 rounded hover:bg-slate-300 dark:hover:bg-slate-500"
+            className="p-1 rounded hover:bg-zinc-300 dark:hover:bg-zinc-500"
             aria-label="Zoom in"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -225,14 +225,14 @@ export default function PdfViewer({
           </button>
           <button
             onClick={resetZoom}
-            className="p-1 rounded hover:bg-slate-300 dark:hover:bg-slate-500 text-xs"
+            className="p-1 rounded hover:bg-zinc-300 dark:hover:bg-zinc-500 text-xs"
             aria-label="Reset zoom"
           >
             Reset
           </button>
         </div>
       </div>
-      <div className="overflow-auto bg-slate-100 dark:bg-slate-700 rounded-b-lg p-2 flex justify-center" style={{ maxHeight: `${height}px` }}>
+      <div className="overflow-auto bg-zinc-100 dark:bg-zinc-700 rounded-b-lg p-2 flex justify-center" style={{ maxHeight: `${height}px` }}>
         <canvas ref={canvasRef} className="shadow-lg" />
       </div>
     </div>

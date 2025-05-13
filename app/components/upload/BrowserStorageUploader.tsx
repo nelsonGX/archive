@@ -48,7 +48,7 @@ export default function BrowserStorageUploader({
   });
   
   return (
-    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mt-2">
+    <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5 mt-2">
       <div 
         className="h-1.5 rounded-full bg-blue-500"
         style={{ width: `${progress}%` }}

@@ -78,7 +78,7 @@ export default function CameraSelect({ onSelect, selectedDeviceId }: CameraSelec
         value={selectedDeviceId}
         onChange={(e) => onSelect(e.target.value)}
         disabled={loading || cameras.length === 0}
-        className="w-full py-2 px-3 border border-slate-300 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900"
+        className="w-full py-2 px-3 border border-zinc-300 dark:border-zinc-700 rounded-md bg-zinc-50 dark:bg-zinc-900"
       >
         {loading ? (
           <option>Loading cameras...</option>

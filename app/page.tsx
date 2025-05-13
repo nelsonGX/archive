@@ -39,7 +39,7 @@ export default async function Home() {
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold mb-2">All Documents</h1>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-zinc-500 dark:text-zinc-400">
             View and manage all your stored documents
           </p>
         </div>
@@ -51,16 +51,16 @@ export default async function Home() {
         </Link>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-6">
           <div className="relative">
             <input
               type="text"
               placeholder="Search documents..."
-              className="pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900 w-80"
+              className="pl-10 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md bg-zinc-50 dark:bg-zinc-900 w-80"
             />
             <svg
-              className="absolute left-3 top-2.5 h-5 w-5 text-slate-400"
+              className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -75,7 +75,7 @@ export default async function Home() {
             </svg>
           </div>
           <div className="flex gap-2">
-            <button className="bg-slate-200 dark:bg-slate-700 p-2 rounded">
+            <button className="bg-zinc-200 dark:bg-zinc-700 p-2 rounded">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -112,17 +112,17 @@ export default async function Home() {
 
         {documents.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-slate-100 dark:bg-slate-700 h-24 w-24 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-zinc-100 dark:bg-zinc-700 h-24 w-24 rounded-full flex items-center justify-center mx-auto mb-4">
               <Image
                 src="/file.svg"
                 alt="No documents"
                 width={40}
                 height={40}
-                className="text-slate-400"
+                className="text-zinc-400"
               />
             </div>
             <h3 className="text-lg font-medium mb-2">No documents found</h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">
+            <p className="text-zinc-500 dark:text-zinc-400 mb-6">
               Upload your first document to get started
             </p>
             <Link
@@ -137,7 +137,7 @@ export default async function Home() {
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded">
@@ -154,7 +154,7 @@ export default async function Home() {
                         {doc.name}
                       </h3>
                     </Link>
-                    <div className="flex justify-between text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="flex justify-between text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                       <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
                       <span>{(doc.size / 1024 / 1024).toFixed(2)} MB</span>
                     </div>
@@ -163,7 +163,7 @@ export default async function Home() {
                         {doc.tags.map(tag => (
                           <span 
                             key={tag.id} 
-                            className="inline-block bg-slate-100 dark:bg-slate-700 text-xs px-2 py-0.5 rounded"
+                            className="inline-block bg-zinc-100 dark:bg-zinc-700 text-xs px-2 py-0.5 rounded"
                           >
                             {tag.name}
                           </span>
@@ -175,7 +175,7 @@ export default async function Home() {
                 <div className="flex justify-end mt-4 space-x-2">
                   <Link
                     href={`/documents/${doc.id}?download=true`}
-                    className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -194,7 +194,7 @@ export default async function Home() {
                   </Link>
                   <Link
                     href={`/documents/${doc.id}`}
-                    className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

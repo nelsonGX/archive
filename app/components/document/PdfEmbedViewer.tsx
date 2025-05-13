@@ -55,7 +55,7 @@ export default function PdfEmbedViewer({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
         <p>Loading document...</p>
       </div>
@@ -64,7 +64,7 @@ export default function PdfEmbedViewer({
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4 max-w-lg text-center">
           <p>{error}</p>
         </div>
@@ -81,7 +81,7 @@ export default function PdfEmbedViewer({
           className="w-full bg-white"
           style={{ height: `${height}px` }}
         >
-          <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-slate-100 dark:bg-slate-700">
+          <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700">
             <p>Your browser doesn't support embedded PDF viewing.</p>
             <a
               href={objectUrl}
@@ -94,7 +94,7 @@ export default function PdfEmbedViewer({
           </div>
         </object>
       ) : (
-        <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-slate-100 dark:bg-slate-700">
+        <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700">
           <p>Unable to load document preview.</p>
         </div>
       )}

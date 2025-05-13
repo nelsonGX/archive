@@ -70,7 +70,7 @@ export default function SignUp() {
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-zinc-900">
             Create your account
           </h2>
         </div>
@@ -82,7 +82,7 @@ export default function SignUp() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-zinc-700">
                 Full Name
               </label>
               <input
@@ -91,14 +91,14 @@ export default function SignUp() {
                 type="text"
                 autoComplete="name"
                 required
-                className="relative block w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-md border-0 p-1.5 text-zinc-900 ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 placeholder="John Doe"
                 value={formData.name}
                 onChange={handleChange}
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
                 Email address
               </label>
               <input
@@ -107,14 +107,14 @@ export default function SignUp() {
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-md border-0 p-1.5 text-zinc-900 ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 placeholder="john@example.com"
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
                 Password
               </label>
               <input
@@ -123,14 +123,14 @@ export default function SignUp() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-md border-0 p-1.5 text-zinc-900 ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
               />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700">
                 Confirm Password
               </label>
               <input
@@ -139,7 +139,7 @@ export default function SignUp() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full rounded-md border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-md border-0 p-1.5 text-zinc-900 ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 placeholder="••••••••"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -159,7 +159,7 @@ export default function SignUp() {
         </form>
         
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-zinc-600">
             Already have an account?{' '}
             <Link href="/auth/signin" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign in

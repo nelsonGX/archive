@@ -113,7 +113,7 @@ export default function SimplePdfViewer({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
         <p>Loading document...</p>
       </div>
@@ -122,7 +122,7 @@ export default function SimplePdfViewer({
 
   if (error && viewMode === 'inline') {
     return (
-      <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4 max-w-lg text-center">
           <p>{error}</p>
         </div>
@@ -138,10 +138,10 @@ export default function SimplePdfViewer({
 
   if (viewMode === 'download') {
     return (
-      <div className="flex flex-col items-center justify-center w-full min-h-[400px] bg-slate-100 dark:bg-slate-700 rounded-lg">
+      <div className="flex flex-col items-center justify-center w-full min-h-[400px] bg-zinc-100 dark:bg-zinc-700 rounded-lg">
         <img src="/file.svg" alt="PDF Document" className="w-24 h-24 mb-4" />
         <h3 className="text-xl font-semibold mb-2">{documentName || 'Document'}</h3>
-        <p className="text-slate-500 dark:text-slate-400 mb-6 text-center max-w-md">
+        <p className="text-zinc-500 dark:text-zinc-400 mb-6 text-center max-w-md">
           This document can be viewed by downloading it to your device.
         </p>
         <div className="flex gap-4">
@@ -156,7 +156,7 @@ export default function SimplePdfViewer({
           </button>
           <button 
             onClick={toggleViewMode}
-            className="border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 dark:hover:bg-slate-600"
+            className="border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 dark:hover:bg-zinc-600"
           >
             Try viewing online
           </button>
@@ -169,7 +169,7 @@ export default function SimplePdfViewer({
     <div className="w-full rounded-lg overflow-hidden shadow-lg">
       {objectUrl ? (
         <>
-          <div className="bg-slate-200 dark:bg-slate-600 p-2 flex justify-between items-center">
+          <div className="bg-zinc-200 dark:bg-zinc-600 p-2 flex justify-between items-center">
             <h3 className="font-medium truncate">{documentName || 'Document'}</h3>
             <div className="flex items-center space-x-2">
               <button
@@ -183,7 +183,7 @@ export default function SimplePdfViewer({
               </button>
               <button
                 onClick={toggleViewMode}
-                className="text-slate-600 hover:text-slate-800 text-sm"
+                className="text-zinc-600 hover:text-zinc-800 text-sm"
               >
                 View options
               </button>
@@ -197,7 +197,7 @@ export default function SimplePdfViewer({
           />
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-slate-100 dark:bg-slate-700">
+        <div className="flex flex-col items-center justify-center w-full min-h-[300px] bg-zinc-100 dark:bg-zinc-700">
           <p>Unable to load document preview.</p>
           <button
             onClick={toggleViewMode}

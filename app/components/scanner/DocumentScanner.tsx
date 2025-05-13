@@ -203,9 +203,9 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
   
   // Default setup mode UI
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
       <div className="mb-8">
-        <div className="w-full aspect-video bg-slate-900 rounded-lg flex items-center justify-center mb-4">
+        <div className="w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center mb-4">
           {scannedDocuments.length > 0 ? (
             // Display the most recently scanned document
             <img
@@ -216,9 +216,9 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
           ) : (
             <div className="text-center">
               <Camera 
-                className="h-16 w-16 mx-auto text-slate-700"
+                className="h-16 w-16 mx-auto text-zinc-700"
               />
-              <p className="mt-4 text-slate-400">
+              <p className="mt-4 text-zinc-400">
                 {isCameraAvailable 
                   ? 'Camera access is required for document scanning'
                   : 'Camera not available on this device. Please upload an image instead.'}
@@ -266,7 +266,7 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
             <button 
               className={`flex-1 py-3 ${isCameraAvailable 
                 ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : 'bg-slate-300 text-slate-500 cursor-not-allowed'} 
+                : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'} 
                 rounded-md transition-colors flex items-center justify-center`}
               onClick={startCamera}
               disabled={!isCameraAvailable}
@@ -275,7 +275,7 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
               Capture
             </button>
             
-            <label className="flex-1 py-3 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors flex items-center justify-center cursor-pointer">
+            <label className="flex-1 py-3 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-md transition-colors flex items-center justify-center cursor-pointer">
               <Upload className="h-6 w-6 mr-2" />
               Upload Image
               <input 
@@ -294,7 +294,7 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
         <h2 className="text-xl font-medium mb-4">Scanned Pages ({scannedDocuments.length})</h2>
         
         {scannedDocuments.length === 0 ? (
-          <p className="text-slate-500 dark:text-slate-400 text-center py-8">
+          <p className="text-zinc-500 dark:text-zinc-400 text-center py-8">
             No pages scanned yet. Capture a document to get started.
           </p>
         ) : (
@@ -302,7 +302,7 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
             {scannedDocuments.map((doc, index) => (
               <div 
                 key={index} 
-                className="aspect-[3/4] bg-slate-100 dark:bg-slate-700 rounded overflow-hidden border border-slate-300 dark:border-slate-600"
+                className="aspect-[3/4] bg-zinc-100 dark:bg-zinc-700 rounded overflow-hidden border border-zinc-300 dark:border-zinc-600"
               >
                 <img 
                   src={doc.processedImage} 
@@ -318,7 +318,7 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
       {/* Action buttons */}
       <div className="flex justify-end space-x-4">
         <button 
-          className="py-2 px-4 border border-slate-300 dark:border-slate-700 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          className="py-2 px-4 border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
           onClick={() => {
             setScannedDocuments([]);
           }}
@@ -329,7 +329,7 @@ export default function DocumentScanner({ onComplete }: DocumentScannerProps) {
         <button 
           className={`py-2 px-4 rounded-md ${
             scannedDocuments.length === 0 
-              ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
+              ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed' 
               : 'bg-blue-600 hover:bg-blue-700 text-white transition-colors'
           }`}
           onClick={handleComplete}

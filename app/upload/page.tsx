@@ -26,7 +26,7 @@ const processDocumentOcr = async (fileId, key, iv) => {
 
 // Basic layout component
 const SimpleLayout = ({ children }) => (
-  <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div className="min-h-screen bg-zinc-100 dark:bg-zinc-900">
     <header className="bg-blue-600 text-white p-4">
       <div className="container mx-auto">
         <h1 className="text-xl font-bold">Archive</h1>
@@ -245,7 +245,7 @@ export default function UploadPage() {
   return (
     <DragDropProvider>
       <SimpleLayout>
-        <div className="bg-white dark:bg-slate-800 rounded shadow p-6">
+        <div className="bg-white dark:bg-zinc-800 rounded shadow p-6">
           <h2 className="text-2xl font-bold mb-4">Upload Files</h2>
           
           <DropZone
@@ -267,7 +267,7 @@ export default function UploadPage() {
                 <p className="mb-2 font-medium text-lg" onClick={openFileDialog}>
                   {isOver ? 'Drop files here' : 'Click to browse files'}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400" onClick={openFileDialog}>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400" onClick={openFileDialog}>
                   {isOver ? 'Release to upload' : 'or drag and drop files here'}
                 </p>
                 
@@ -296,7 +296,7 @@ export default function UploadPage() {
                   id="tags"
                   type="text"
                   placeholder="e.g. important, tax, 2023"
-                  className="w-full py-2 px-3 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900"
+                  className="w-full py-2 px-3 border border-zinc-300 dark:border-zinc-700 rounded-md bg-zinc-50 dark:bg-zinc-900"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   disabled={isUploading}
@@ -308,7 +308,7 @@ export default function UploadPage() {
                   <input
                     id="run-ocr"
                     type="checkbox"
-                    className="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 border-zinc-300 rounded text-blue-600 focus:ring-blue-500"
                     checked={runOcr}
                     onChange={(e) => setRunOcr(e.target.checked)}
                     disabled={isUploading}
@@ -322,7 +322,7 @@ export default function UploadPage() {
                   <input
                     id="encrypt-file"
                     type="checkbox"
-                    className="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 border-zinc-300 rounded text-blue-600 focus:ring-blue-500"
                     checked={encryptFile}
                     onChange={(e) => setEncryptFile(e.target.checked)}
                     disabled={isUploading}
@@ -336,7 +336,7 @@ export default function UploadPage() {
                   <input
                     id="backup-drive"
                     type="checkbox"
-                    className="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 border-zinc-300 rounded text-blue-600 focus:ring-blue-500"
                     checked={backupToDrive}
                     onChange={(e) => setBackupToDrive(e.target.checked)}
                     disabled={isUploading}
@@ -354,17 +354,17 @@ export default function UploadPage() {
               <h3 className="font-medium mb-3">Selected Files ({files.length})</h3>
               <div className="space-y-3">
                 {files.map(fileData => (
-                  <div key={fileData.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded flex justify-between items-center">
+                  <div key={fileData.id} className="bg-zinc-50 dark:bg-zinc-800 p-3 rounded flex justify-between items-center">
                     <div className="flex-grow mr-4">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium truncate max-w-xs">{fileData.name}</span>
-                        <span className="text-sm text-gray-500 ml-2">
+                        <span className="text-sm text-zinc-500 ml-2">
                           {(fileData.size / 1024 / 1024).toFixed(2)} MB
                         </span>
                       </div>
 
                       {(isUploading || fileData.progress > 0) && (
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
+                        <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5 mt-1">
                           <div
                             className={`h-1.5 rounded-full ${fileData.error ? 'bg-red-500' : 'bg-blue-500'}`}
                             style={{ width: `${fileData.progress || 0}%` }}
@@ -394,7 +394,7 @@ export default function UploadPage() {
           
           <div className="mt-6 flex justify-end gap-3">
             <button 
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded"
+              className="px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded"
               onClick={() => router.push('/')}
             >
               Cancel

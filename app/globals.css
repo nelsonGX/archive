@@ -5,17 +5,101 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #64748b;
+  --accent: #f97316;
+  --success: #10b981;
+  --error: #ef4444;
+  --card: #f8fafc;
+  --card-foreground: #303030;
+  --border: #e2e8f0;
+  --radius: 0.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --secondary: #94a3b8;
+    --accent: #fb923c;
+    --success: #34d399;
+    --error: #f87171;
+    --card: #1b1a1a;
+    --card-foreground: #f8fafc;
+    --border: #4c4c4c;
   }
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans, system-ui, sans-serif);
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.bounce {
+  animation: bounce 0.5s ease-in-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Custom components */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-[--primary] hover:bg-[--primary-hover] text-white shadow hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-[--secondary] hover:opacity-90 text-white;
+  }
+  
+  .btn-error {
+    @apply bg-[--error] hover:opacity-90 text-white;
+  }
+  
+  .card {
+    @apply bg-[--card] text-[--card-foreground] rounded-[--radius] border border-[--border] shadow p-4;
+  }
+  
+  .tag {
+    @apply px-2 py-1 text-xs rounded-full inline-flex items-center gap-1;
+  }
 }

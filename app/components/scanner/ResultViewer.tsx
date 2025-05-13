@@ -258,7 +258,7 @@ export default function ResultViewer({
               >
                 <div 
                   className={`w-12 h-10 flex items-center justify-center rounded p-1 ${
-                    selectedFilter === filter.id ? 'bg-purple-600 border border-white' : 'bg-gray-700'
+                    selectedFilter === filter.id ? 'bg-purple-600 border border-white' : 'bg-zinc-700'
                   }`}
                 >
                   <div 
