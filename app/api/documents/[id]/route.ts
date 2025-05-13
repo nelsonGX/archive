@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/auth';
 import { prisma } from '@/app/lib/prisma';
+import { getDecryptedFile } from '@/app/lib/fileStorage';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export async function GET(
@@ -19,7 +20,7 @@ export async function GET(
     }
 
     const userId = session.user.id;
-    // Get document ID directly from context.params without destructuring
+    // Get document ID directly from context.params
     const documentId = context.params.id;
     
     // Get the document
@@ -46,14 +47,35 @@ export async function GET(
     const download = searchParams.get('download') === 'true';
     
     if (download) {
-      // For downloads, we'll return the document with encryption keys
-      // so the client can decrypt it from browser storage
-      return NextResponse.json({
-        document: document // Return the full document including encryption keys
-      });
+      try {
+        // Get and decrypt the file from server storage
+        const decryptedFile = await getDecryptedFile(
+          document.filePath,
+          document.encryptionKey || '',
+          document.encryptionIv || ''
+        );
+        
+        // Set headers for file download
+        const headers = new Headers();
+        headers.set('Content-Disposition', `attachment; filename="${document.name}"`);
+        headers.set('Content-Type', document.fileType === 'pdf' ? 'application/pdf' : 'application/octet-stream');
+        headers.set('Content-Length', decryptedFile.length.toString());
+        
+        // Return the file as a downloadable response
+        return new NextResponse(decryptedFile, {
+          status: 200,
+          headers
+        });
+      } catch (error) {
+        console.error('Error downloading file:', error);
+        return NextResponse.json(
+          { error: 'An error occurred while downloading the file' },
+          { status: 500 }
+        );
+      }
     }
     
-    // Return document metadata without sensitive fields
+    // For normal viewing, return document metadata without sensitive fields
     const { encryptionKey, encryptionIv, ...safeDocument } = document;
     return NextResponse.json({ document: safeDocument });
   } catch (error) {
@@ -79,7 +101,7 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    // Get document ID directly from context.params without destructuring
+    // Get document ID directly from context.params
     const documentId = context.params.id;
     
     // Get the document
@@ -98,6 +120,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
+    // Delete document from server storage
+    const { deleteFile } = await import('@/app/lib/fileStorage');
+    await deleteFile(document.filePath);
+    
     // Delete document from database
     await prisma.document.delete({
       where: {
@@ -106,8 +132,7 @@ export async function DELETE(
     });
     
     return NextResponse.json({ 
-      success: true,
-      fileId: document.filePath // Return the file ID so client can delete from browser storage
+      success: true
     });
   } catch (error) {
     console.error('Error deleting document:', error);

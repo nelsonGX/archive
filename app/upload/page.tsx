@@ -3,16 +3,15 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { DragDropProvider, DropZone } from './DragDropContext';
-import { storeEncryptedFile } from '@/app/lib/browserStorage';
 import dynamic from 'next/dynamic';
 
 // Import OCR module dynamically with no SSR to avoid server-side errors
-const processDocumentOcr = async (fileId, key, iv) => {
+const processDocumentOcr = async (documentId) => {
   if (typeof window !== 'undefined') {
     try {
       const module = await import('@/app/lib/ocr');
       console.log("OCR module loaded");
-      const result = await module.processDocumentOcr(fileId, key, iv);
+      const result = await module.processDocumentOcr(documentId);
       console.log("OCR processing completed");
       return result;
     } catch (error) {
@@ -108,10 +107,10 @@ export default function UploadPage() {
 
       try {
         // Update progress
-        updatedFiles[i] = { ...fileData, progress: 10, error: undefined };
+        updatedFiles[i] = { ...fileData, progress: 20, error: undefined };
         setFiles([...updatedFiles]);
 
-        // Step 1: Register the file with the server
+        // Prepare formData with file and metadata
         const formData = new FormData();
         formData.append('file', fileData.file);
         formData.append('tags', tags);
@@ -119,7 +118,7 @@ export default function UploadPage() {
         formData.append('encrypt', encryptFile.toString());
         formData.append('backup', backupToDrive.toString());
 
-        // Call the API to register the file
+        // Upload the file directly to the server
         const response = await fetch('/api/documents/upload', {
           method: 'POST',
           body: formData,
@@ -130,42 +129,20 @@ export default function UploadPage() {
           throw new Error(error.message || 'Upload failed');
         }
 
-        // Get the document and encryption details from the response
-        const { document, encryptionKey, encryptionIv } = await response.json();
-
-        // Update progress
-        updatedFiles[i] = { ...updatedFiles[i], progress: 30 };
+        // Get the document details from the response
+        const { document, success } = await response.json();
+        
+        updatedFiles[i] = { ...updatedFiles[i], progress: 70 };
         setFiles([...updatedFiles]);
-
-        // Step 2: Store the encrypted file in IndexedDB
-        // Read the file as ArrayBuffer
-        const fileBuffer = await fileData.file.arrayBuffer();
-
-        // Update progress
-        updatedFiles[i] = { ...updatedFiles[i], progress: 60 };
-        setFiles([...updatedFiles]);
-
-        // Encrypt and store the file
-        await storeEncryptedFile(
-          fileBuffer,
-          document.filePath, // Use the server-generated ID as the storage key
-          encryptionKey,
-          encryptionIv,
-          fileData.file.name
-        );
 
         // If OCR is enabled, process the document
         if (runOcr) {
-          updatedFiles[i] = { ...updatedFiles[i], progress: 75 };
+          updatedFiles[i] = { ...updatedFiles[i], progress: 80 };
           setFiles([...updatedFiles]);
 
           try {
             // Process OCR on the document
-            const ocrText = await processDocumentOcr(
-              document.filePath,
-              encryptionKey,
-              encryptionIv
-            );
+            const ocrText = await processDocumentOcr(document.id);
 
             // Save OCR data to the server
             if (ocrText) {

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getDecryptedFile } from '@/app/lib/browserStorage';
 
 interface SimplePdfViewerProps {
-  fileId: string;
-  encryptionKey: string;
-  encryptionIv: string;
+  fileId?: string;
+  encryptionKey?: string;
+  encryptionIv?: string;
+  documentId: string;
   height?: number;
   documentName: string;
   isServerStored?: boolean;
@@ -16,9 +16,10 @@ export default function SimplePdfViewer({
   fileId,
   encryptionKey,
   encryptionIv,
+  documentId,
   documentName,
   height = 600,
-  isServerStored = false
+  isServerStored = true
 }: SimplePdfViewerProps) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,25 +34,26 @@ export default function SimplePdfViewer({
         setIsLoading(true);
         setError(null);
 
-        // Get the file data - either from server or browser storage
-        let fileData;
-        if (isServerStored) {
-          // Get the file directly from the server's document download endpoint
-          const documentId = fileId.split('/').pop()?.split('.')[0] || '';
-          const response = await fetch(`/api/documents/download?id=${documentId}`);
-          if (!response.ok) throw new Error('Failed to fetch document from server');
-          fileData = await response.arrayBuffer();
-        } else {
-          // Get the decrypted file from browser storage
-          fileData = await getDecryptedFile(fileId, encryptionKey, encryptionIv);
+        // For server-stored files, fetch directly from the API
+        const response = await fetch(`/api/documents/${documentId}?download=true`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch document for preview');
         }
         
-        // Create a blob from the decrypted data
-        const blob = new Blob([fileData], { type: 'application/pdf' });
+        // Check content type
+        const contentType = response.headers.get('content-type');
         
-        // Create an object URL from the blob
-        const url = URL.createObjectURL(blob);
-        setObjectUrl(url);
+        // If it's a PDF, create a blob URL from it
+        if (contentType && contentType.includes('application/pdf')) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          setObjectUrl(url);
+        } else {
+          // Not a PDF, handle accordingly
+          console.error('Response is not a PDF:', contentType);
+          throw new Error('Document is not a PDF or could not be loaded');
+        }
       } catch (err) {
         console.error('Error loading PDF:', err);
         setError(err instanceof Error ? err.message : 'Failed to load PDF');
@@ -70,37 +72,12 @@ export default function SimplePdfViewer({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [fileId, encryptionKey, encryptionIv, viewMode]);
+  }, [documentId, viewMode]);
 
   const handleDownload = async () => {
     try {
-      // Get the file data - either from server or browser storage
-      let fileData;
-      if (isServerStored) {
-        // Get the file directly from the server's document download endpoint
-        const documentId = fileId.split('/').pop()?.split('_')[0] || '';
-        const response = await fetch(`/api/documents/download?id=${documentId}`);
-        if (!response.ok) throw new Error('Failed to fetch document from server');
-        fileData = await response.arrayBuffer();
-      } else {
-        // Get the decrypted file from browser storage
-        fileData = await getDecryptedFile(fileId, encryptionKey, encryptionIv);
-      }
-      
-      // Create a blob from the decrypted data
-      const blob = new Blob([fileData], { type: 'application/pdf' });
-      
-      // Create a download link
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = documentName || 'document.pdf';
-      document.body.appendChild(a);
-      a.click();
-      
-      // Clean up
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Direct file download by opening in a new tab
+      window.open(`/api/documents/${documentId}?download=true`, '_blank');
     } catch (err) {
       console.error('Error downloading PDF:', err);
       setError(err instanceof Error ? err.message : 'Failed to download PDF');
@@ -189,11 +166,11 @@ export default function SimplePdfViewer({
               </button>
             </div>
           </div>
-          <embed 
+          <iframe 
             src={objectUrl} 
-            type="application/pdf" 
-            className="w-full" 
+            className="w-full border-none" 
             style={{ height: `${height}px` }}
+            title={documentName}
           />
         </>
       ) : (

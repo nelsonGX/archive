@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import PageLayout from '@/app/components/PageLayout';
 import DocumentPreview from '@/app/components/document/DocumentPreview';
-import { processDocumentOcr } from '@/app/lib/ocr';
 
 export default function DocumentViewer() {
   const params = useParams();
@@ -50,33 +49,8 @@ export default function DocumentViewer() {
     try {
       const id = Array.isArray(params.id) ? params.id[0] : params.id;
       
-      // Fetch document with encryption keys for download
-      const response = await fetch(`/api/documents/${id}?download=true`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch document for download');
-      }
-      
-      const { document } = await response.json();
-      
-      // In a real implementation, we would retrieve the encrypted file from IndexedDB,
-      // decrypt it using the keys, and create a download link
-      // For this demo, we'll simulate the download
-
-      // Create a simple text file for demonstration
-      const blob = new Blob(['This is a simulated document download'], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      
-      // Create a hidden download link and click it
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = document.name || 'document.txt';
-      document.body.appendChild(a);
-      a.click();
-      
-      // Clean up
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Direct download from server by requesting with download=true
+      window.open(`/api/documents/${id}?download=true`, '_blank');
       
     } catch (error) {
       console.error('Error downloading document:', error);
@@ -114,24 +88,10 @@ export default function DocumentViewer() {
     try {
       setIsProcessingOcr(true);
 
-      // Fetch document with encryption keys to process OCR
+      // Request OCR processing for the document
       const id = Array.isArray(params.id) ? params.id[0] : params.id;
-      const response = await fetch(`/api/documents/${id}?download=true`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch document for OCR processing');
-      }
-
-      const { document: docWithKeys } = await response.json();
-
-      // Process document for OCR
-      const extractedText = await processDocumentOcr(
-        docWithKeys.filePath,
-        docWithKeys.encryptionKey,
-        docWithKeys.encryptionIv
-      );
-
-      // Update document with OCR data
+      
+      // Send OCR processing request to server
       const updateResponse = await fetch('/api/documents/ocr', {
         method: 'POST',
         headers: {
@@ -139,12 +99,11 @@ export default function DocumentViewer() {
         },
         body: JSON.stringify({
           documentId: id,
-          ocrData: extractedText,
         }),
       });
 
       if (!updateResponse.ok) {
-        throw new Error('Failed to update document with OCR data');
+        throw new Error('Failed to process OCR on document');
       }
 
       const { document: updatedDoc } = await updateResponse.json();

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/auth';
 import { prisma } from '@/app/lib/prisma';
 import { generateEncryptionKey } from '@/app/lib/serverEncryption';
+import { saveEncryptedFile, generateUniqueFileId } from '@/app/lib/fileStorage';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate a unique file ID and encryption keys
-    const uniqueFileId = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    const uniqueFileId = generateUniqueFileId();
     const { key, iv } = generateEncryptionKey();
     
     // Get file info
@@ -40,12 +41,19 @@ export async function POST(request: NextRequest) {
     // Parse tags if present
     const tagList = tags ? tags.split(',').map(tag => tag.trim()) : [];
 
+    // Convert file to buffer for server-side storage
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Save encrypted file to server storage
+    await saveEncryptedFile(uniqueFileId, buffer, key, iv);
+
     // Create document record in database
     const document = await prisma.document.create({
       data: {
         name: originalName,
         fileType: fileType,
-        filePath: uniqueFileId,  // Store the unique ID instead of a file path
+        filePath: uniqueFileId,  // Store the unique ID for server-side file
         encryptionKey: key,
         encryptionIv: iv,
         size: size,
@@ -63,12 +71,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Return document details with encryption keys for client-side storage
+    // Return document details without encryption keys
+    const { encryptionKey, encryptionIv, ...safeDocument } = document;
+    
     return NextResponse.json({
-      document: document,
-      encryptionKey: key,
-      encryptionIv: iv,
-      uploadUrl: `/api/documents/storage/${uniqueFileId}` // URL for client to upload to browser storage
+      document: safeDocument,
+      success: true
     }, { status: 201 });
   } catch (error) {
     console.error('Error uploading document:', error);

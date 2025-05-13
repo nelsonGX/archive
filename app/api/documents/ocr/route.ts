@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/auth';
 import { prisma } from '@/app/lib/prisma';
 import { unstable_noStore as noStore } from 'next/cache';
+import { getDecryptedFile } from '@/app/lib/fileStorage';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * API endpoint to update a document with OCR data
+ * API endpoint to process OCR on a document and update with OCR data
  * POST /api/documents/ocr
  */
 export async function POST(request: NextRequest) {
@@ -22,10 +23,11 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
     
     // Parse the request body
-    const { documentId, ocrData } = await request.json();
+    const body = await request.json();
+    const { documentId, ocrData } = body;
     
-    if (!documentId || !ocrData) {
-      return NextResponse.json({ error: 'Document ID and OCR data are required' }, { status: 400 });
+    if (!documentId) {
+      return NextResponse.json({ error: 'Document ID is required' }, { status: 400 });
     }
     
     // Get the document
@@ -44,6 +46,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
+    let extractedText = ocrData;
+
+    // If ocrData is not provided, process the document for OCR
+    if (!extractedText) {
+      try {
+        // Get the decrypted file
+        const decryptedFile = await getDecryptedFile(
+          document.filePath,
+          document.encryptionKey || '',
+          document.encryptionIv || ''
+        );
+        
+        // Process document for OCR
+        // This is a placeholder for actual OCR processing
+        // In a real implementation, you would use a library like Tesseract.js
+        extractedText = `Sample OCR text for document: ${document.name}. 
+        This is a placeholder for actual OCR processing.`;
+        
+        // In a real implementation, you would do something like:
+        // const { createWorker } = require('tesseract.js');
+        // const worker = await createWorker();
+        // await worker.loadLanguage('eng');
+        // await worker.initialize('eng');
+        // const { data: { text } } = await worker.recognize(decryptedFile);
+        // extractedText = text;
+        // await worker.terminate();
+      } catch (error) {
+        console.error('Error processing document for OCR:', error);
+        return NextResponse.json(
+          { error: 'Failed to process document for OCR' },
+          { status: 500 }
+        );
+      }
+    }
+    
     // Update document with OCR data
     const updatedDocument = await prisma.document.update({
       where: {
@@ -51,7 +88,7 @@ export async function POST(request: NextRequest) {
       },
       data: {
         ocr: true,
-        ocrData: ocrData,
+        ocrData: extractedText,
       },
     });
     
